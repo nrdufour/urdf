@@ -10,4 +10,33 @@
 -include("triples.hrl").
 
 convert(Triples) ->
-    ok.
+
+    Entities = urdf_triple:factorize(Triples),
+
+    ConvertValue = fun(Triple, Acc) ->
+        Key = Triple#triple.property,
+        Value = Triple#triple.object,
+        Type = Triple#triple.type,
+
+        WrappedValue = case Type of
+            resource -> list_to_binary([<<"{\n    \"@iri\": \"">>, Value, <<"\"\n  }">>]);
+            _ -> list_to_binary([<<"\"">>, Value, <<"\"">>])
+        end,
+
+        list_to_binary([Acc, <<",\n  \"">>, Key, <<"\": ">>, WrappedValue])
+    end,
+
+    ConvertEntity = fun(ItemId, Values, Acc) ->
+        Subject = list_to_binary([<<"{\n  \"@subject\": {\n    \"@iri\": \"">>, ItemId, <<"\"\n  }">>]),
+
+        DisplayedValues = lists:foldl(ConvertValue, <<"">>, Values),
+
+        Comma = case Acc of
+            [] -> <<"">>;
+            _  -> <<", ">>
+        end,
+
+        list_to_binary([Acc, Comma, Subject, DisplayedValues])
+    end,
+
+    list_to_binary([<<"[">>, dict:fold(ConvertEntity, [], Entities), <<"\n}]\n\n">>]).
