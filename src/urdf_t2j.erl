@@ -19,15 +19,15 @@ convert(Triples) ->
         Type = Triple#triple.type,
 
         WrappedValue = case Type of
-            resource -> list_to_binary([<<"{\n    \"@iri\": \"">>, Value, <<"\"\n  }">>]);
-            _ -> list_to_binary([<<"\"">>, Value, <<"\"">>])
+            resource -> iolist_to_binary([<<"{\n    \"@iri\": \"">>, Value, <<"\"\n  }">>]);
+            _ -> iolist_to_binary([<<"\"">>, Value, <<"\"">>])
         end,
 
-        list_to_binary([Acc, <<",\n  \"">>, Key, <<"\": ">>, WrappedValue])
+        iolist_to_binary([Acc, <<",\n  \"">>, Key, <<"\": ">>, WrappedValue])
     end,
 
     ConvertEntity = fun(ItemId, Values, Acc) ->
-        Subject = list_to_binary([<<"{\n  \"@subject\": {\n    \"@iri\": \"">>, ItemId, <<"\"\n  }">>]),
+        Subject = iolist_to_binary([<<"{\n  \"@subject\": {\n    \"@iri\": \"">>, ItemId, <<"\"\n  }">>]),
 
         DisplayedValues = lists:foldl(ConvertValue, <<"">>, Values),
 
@@ -36,7 +36,7 @@ convert(Triples) ->
             _  -> <<", ">>
         end,
 
-        list_to_binary([Acc, Comma, Subject, DisplayedValues, <<"\n}">>])
+        iolist_to_binary([Acc, Comma, Subject, DisplayedValues, <<"\n}">>])
     end,
 
-    list_to_binary([<<"[">>, dict:fold(ConvertEntity, [], Entities), <<"]\n\n">>]).
+    iolist_to_binary([<<"[">>, dict:fold(ConvertEntity, [], Entities), <<"]\n\n">>]).

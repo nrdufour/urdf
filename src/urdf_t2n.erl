@@ -22,23 +22,23 @@ convert(Triples) ->
             resource ->
                 case Value of
                     << "_:", _Rest/binary >> -> Value;
-                    _ -> list_to_binary([<<"<">>, Value, <<">">>])
+                    _ -> iolist_to_binary([<<"<">>, Value, <<">">>])
                 end;
-            _ -> list_to_binary([<<"\"">>, Value, <<"\"">>])
+            _ -> iolist_to_binary([<<"\"">>, Value, <<"\"">>])
         end,
 
-        NewValue = list_to_binary([ItemId, <<" <">>, Key, <<"> ">>, WrappedValue, <<".\n">>]),
+        NewValue = iolist_to_binary([ItemId, <<" <">>, Key, <<"> ">>, WrappedValue, <<".\n">>]),
         {ItemId, << Acc/binary, NewValue/binary >>}
     end,
 
     ConvertEntity = fun(ItemId, Values, Acc) ->
         WrappedItemId = case ItemId of
             << "_:", _Rest/binary >> -> ItemId;
-            _ -> list_to_binary([<<"<">>, ItemId, <<">">>])
+            _ -> iolist_to_binary([<<"<">>, ItemId, <<">">>])
         end,
 
         {_, DisplayedValues} = lists:foldl(ConvertValue, {WrappedItemId, <<"">>}, Values),
-        Acc ++ [list_to_binary([DisplayedValues,  <<"\n">>])]
+        Acc ++ [iolist_to_binary([DisplayedValues,  <<"\n">>])]
     end,
 
-    list_to_binary(dict:fold(ConvertEntity, [], Entities)).
+    iolist_to_binary(dict:fold(ConvertEntity, [], Entities)).
