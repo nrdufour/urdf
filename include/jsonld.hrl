@@ -34,6 +34,6 @@
 ]
 ).
 
--define(IS_OBJECT(Obj), jsonld_utils:is_proplist(Obj)).
+-define(IS_OBJECT(Obj), urdf_util:is_proplist(Obj)).
 
 -define(HAS_VALUE(Proplist, Key), lists:keyfind(Key, 1, Proplist)).
