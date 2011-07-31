@@ -37,7 +37,7 @@ convert(Triples) ->
         Acc ++ [list_to_binary([DisplayedValues,  <<"\n">>])]
     end,
 
-    dict:fold(ConvertEntity, [], Entities).
+    list_to_binary(dict:fold(ConvertEntity, [], Entities)).
 
 factorize(Triples) ->
     Fun = fun(Triple, D) ->
