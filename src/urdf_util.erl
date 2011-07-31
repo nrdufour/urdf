@@ -5,7 +5,7 @@
 -module(urdf_util).
 -author("Nicolas R Dufour <nicolas.dufour@nemoworld.info>").
 
--export([uuid/0, is_proplist/1]).
+-export([uuid/0, new_bnode/0, is_proplist/1]).
 
 uuid() ->
     Now = {_, _, Micro} = now(),
@@ -14,6 +14,12 @@ uuid() ->
     Then = calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}),
     Prefix = io_lib:format("~14.16.0b", [(Nowsecs - Then) * 1000000 + Micro]),
     list_to_binary(Prefix ++ to_hex(crypto:rand_bytes(9))).
+
+-define(BNODE_PREFIX, <<"_:">>).
+
+new_bnode() ->
+    UUID = uuid(),
+    << ?BNODE_PREFIX/binary, UUID/binary >>.
 
 is_proplist(Object) when is_list(Object) ->
     Fun = fun(X, Acc) ->
