@@ -12,7 +12,7 @@
 convert(Triples) ->
     Entities = factorize(Triples),
 
-    ConvertValue = fun({Key, Value, Type}, Acc) ->
+    ConvertValue = fun({Key, Value, Type}, {ItemId, Acc}) ->
 
         WrappedValue = case Type of
             resource ->
@@ -23,18 +23,18 @@ convert(Triples) ->
             _ -> list_to_binary([<<"\"">>, Value, <<"\"">>])
         end,
 
-        NewValue = case Acc of
-            <<"">> ->
-                list_to_binary([<<"   <">>, Key, <<"> ">>, WrappedValue]);
-            _ ->
-                list_to_binary([<<";\n   <">>, Key, <<"> ">>, WrappedValue])
-        end,
-        << Acc/binary, NewValue/binary >>
+        NewValue = list_to_binary([ItemId, <<" <">>, Key, <<"> ">>, WrappedValue, <<".\n">>]),
+        {ItemId, << Acc/binary, NewValue/binary >>}
     end,
 
     ConvertEntity = fun(ItemId, Values, Acc) ->
-        DisplayedValues = lists:foldl(ConvertValue, <<"">>, Values),
-        Acc ++ [list_to_binary([ItemId, <<"\n">>, DisplayedValues,  <<".\n">>])]
+        WrappedItemId = case ItemId of
+            << "_:", _Rest/binary >> -> ItemId;
+            _ -> list_to_binary([<<"<">>, ItemId, <<">">>])
+        end,
+
+        {_, DisplayedValues} = lists:foldl(ConvertValue, {WrappedItemId, <<"">>}, Values),
+        Acc ++ [list_to_binary([DisplayedValues,  <<"\n">>])]
     end,
 
     dict:fold(ConvertEntity, [], Entities).
