@@ -10,4 +10,46 @@
 -include("triples.hrl").
 
 convert(Triples) ->
-    ok.
+    Entities = factorize(Triples),
+
+    ConvertValue = fun({Key, Value, Type}, Acc) ->
+
+        WrappedValue = case Type of
+            resource ->
+                case Value of
+                    << "_:", _Rest/binary >> -> Value;
+                    _ -> list_to_binary([<<"<">>, Value, <<">">>])
+                end;
+            _ -> list_to_binary([<<"\"">>, Value, <<"\"">>])
+        end,
+
+        NewValue = case Acc of
+            <<"">> ->
+                list_to_binary([<<"   <">>, Key, <<"> ">>, WrappedValue]);
+            _ ->
+                list_to_binary([<<";\n   <">>, Key, <<"> ">>, WrappedValue])
+        end,
+        << Acc/binary, NewValue/binary >>
+    end,
+
+    ConvertEntity = fun(ItemId, Values, Acc) ->
+        DisplayedValues = lists:foldl(ConvertValue, <<"">>, Values),
+        Acc ++ [list_to_binary([ItemId, <<"\n">>, DisplayedValues,  <<".\n">>])]
+    end,
+
+    dict:fold(ConvertEntity, [], Entities).
+
+factorize(Triples) ->
+    Fun = fun(Triple, D) ->
+        Subject = Triple#triple.subject,
+
+        EntityList = case dict:is_key(Subject, D) of
+            true -> dict:fetch(Subject, D);
+            false -> []
+        end,
+
+        UpdatedEntityList = EntityList ++ [{ Triple#triple.property, Triple#triple.object, Triple#triple.type }],
+
+        dict:store(Subject, UpdatedEntityList, D)
+    end,
+    lists:foldl(Fun, dict:new(), Triples).
