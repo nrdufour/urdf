@@ -6,6 +6,8 @@ URDF is an erlang application providing tools to convert RDF triples back and fo
 * n3
 * xml rdf
 
+This project is a refactored version from [erlang-json-ld][https://github.com/nrdufour/erlang-json-ld].
+
 ## Json-ld
 
 This processor is heavily inspired from the python version written by [Bradley Allen](https://github.com/bradleypallen/json_ld_processor).
