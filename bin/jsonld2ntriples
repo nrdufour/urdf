@@ -15,8 +15,10 @@ parse_json_to_ntriples(JsonFile) ->
     NTriples = urdf:j2t(Json),
     lists:foreach(
         fun(NTriple) ->
-            io:format("~s~n", [binary_to_list(NTriple)])
+            %io:format("~s~n", [binary_to_list(NTriple)])
+            io:format("~p~n", [NTriple])
         end,
         NTriples
     ),
     ok.
+

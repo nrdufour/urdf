@@ -165,8 +165,8 @@ is_resource(_Subject, _Property, Object, Context) ->
     jsonld_context:has_namespace(Context, Object)
     or not(nomatch == re:run(Object, ?BNODE_PATTERN))
     or not(nomatch == re:run(Object, ?CURIE_PATTERN))
-    or not(nomatch == re:run(Object, ?ABSOLUTE_IRI_PATTERN))
-    or not(nomatch == re:run(Object, ?RELATIVE_IRI_PATTERN)).
+    or not(nomatch == re:run(Object, ?ABSOLUTE_IRI_PATTERN)).
+%    or not(nomatch == re:run(Object, ?RELATIVE_IRI_PATTERN)).
 
 triple(Subject, Property, Object, Context) ->
     case is_resource(Subject, Property, Object, Context) of
@@ -215,18 +215,19 @@ process_resource(Object, Context) ->
                     % TODO need something for url parsing with #base rather than just concatenate it!
                     <<Base/binary, IRI/binary>>;
                 % RelativeIri
-                {_, _, _, {match, [IRI]}} ->
-                    PossibleBase = jsonld_context:get_base(Context),
-                    case PossibleBase of
-                        undefined ->
-                            throw({wrong_relative_iri_resource, Object});
-                        _ ->
-                            % TODO need something for url parsing with #base rather than just concatenate it!
-                            <<PossibleBase/binary, IRI/binary>>
-                    end;
+                %{_, _, _, {match, [IRI]}} ->
+                %    PossibleBase = jsonld_context:get_base(Context),
+                %    case PossibleBase of
+                %        undefined ->
+                %            throw({wrong_relative_iri_resource, Object});
+                %        _ ->
+                %            % TODO need something for url parsing with #base rather than just concatenate it!
+                %            <<PossibleBase/binary, IRI/binary>>
+                %    end;
                 % Everything else
                 _ ->
-                    throw({wrong_resource, Object})
+                    Object
+                    %throw({wrong_resource, Object})
             end
     end.
 
