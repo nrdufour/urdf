@@ -1,5 +1,5 @@
 
-% This file is part of erlang-json-ld released under the MIT license.
+% This file is part of urdf released under the MIT license.
 % See the LICENSE file for more information.
 
 -module(urdf).
