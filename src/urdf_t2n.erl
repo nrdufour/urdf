@@ -10,9 +10,13 @@
 -include("triples.hrl").
 
 convert(Triples) ->
-    Entities = factorize(Triples),
+    Entities = urdf_triple:factorize(Triples),
 
-    ConvertValue = fun({Key, Value, Type}, {ItemId, Acc}) ->
+    ConvertValue = fun(Triple, {ItemId, Acc}) ->
+
+        Key = Triple#triple.property,
+        Value = Triple#triple.object,
+        Type = Triple#triple.type,
 
         WrappedValue = case Type of
             resource ->
@@ -38,18 +42,3 @@ convert(Triples) ->
     end,
 
     list_to_binary(dict:fold(ConvertEntity, [], Entities)).
-
-factorize(Triples) ->
-    Fun = fun(Triple, D) ->
-        Subject = Triple#triple.subject,
-
-        EntityList = case dict:is_key(Subject, D) of
-            true -> dict:fetch(Subject, D);
-            false -> []
-        end,
-
-        UpdatedEntityList = EntityList ++ [{ Triple#triple.property, Triple#triple.object, Triple#triple.type }],
-
-        dict:store(Subject, UpdatedEntityList, D)
-    end,
-    lists:foldl(Fun, dict:new(), Triples).
