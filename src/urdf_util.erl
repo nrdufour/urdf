@@ -5,7 +5,7 @@
 -module(urdf_util).
 -author("Nicolas R Dufour <nicolas.dufour@nemoworld.info>").
 
--export([uuid/0]).
+-export([uuid/0, is_proplist/1]).
 
 uuid() ->
     Now = {_, _, Micro} = now(),
@@ -15,8 +15,20 @@ uuid() ->
     Prefix = io_lib:format("~14.16.0b", [(Nowsecs - Then) * 1000000 + Micro]),
     list_to_binary(Prefix ++ to_hex(crypto:rand_bytes(9))).
 
+is_proplist(Object) when is_list(Object) ->
+    Fun = fun(X, Acc) ->
+        IsProp = case X of
+            {_, _} -> true;
+            _      -> false
+        end,
+        Acc and IsProp
+    end,
+    lists:foldl(Fun, true, Object);
+is_proplist(_) ->
+    false.
+
 %
-%
+% Internal API
 %
 
 to_hex([]) ->
