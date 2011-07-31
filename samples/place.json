@@ -1,0 +1,22 @@
+{
+   "name": "The Empire State Building",
+   "description": "The Empire State Building is a 102-story landmark in New York City.",
+   "image": "http://www.civil.usherbrooke.ca/cours/gci215a/empire-state-building.jpg",
+   "geo": {
+      "latitude": "40.75",
+      "longitude": "73.98"
+   },
+   "@context": {
+      "name": "http://schema.org/name",
+      "description": "http://schema.org/description",
+      "image": "http://schema.org/image",
+      "geo": "http://schema.org/geo",
+      "latitude": "http://schema.org/latitude",
+      "longitude": "http://schema.org/longitude",
+      "xsd": "http://www.w3.org/2001/XMLSchema#",
+      "@coerce": {
+         "xsd:anyURI": ["image"],
+         "xsd:float": ["latitude", "longitude"]
+      }
+   }
+}

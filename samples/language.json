@@ -1,0 +1,10 @@
+{
+  "#": {"foaf": "http://xmlns.com/foaf/0.1/"},
+  "@": "<http://example.org/people#john>",
+  "a": "foaf:Person",
+  "foaf:name" : 
+  {
+    "@literal": "花澄",
+    "@language": "ja"
+  }
+}

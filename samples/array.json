@@ -1,0 +1,20 @@
+[
+ {
+   "@": "_:bnode1",
+   "a": "foaf:Person",
+   "foaf:homepage": "http://example.com/bob/",
+   "foaf:name": "Bob"
+ },
+ {
+   "@": "_:bnode2",
+   "a": "foaf:Person",
+   "foaf:homepage": "http://example.com/eve/",
+   "foaf:name": "Eve"
+ },
+ {
+   "@": "_:bnode3",
+   "a": "foaf:Person",
+   "foaf:homepage": "http://example.com/manu/",
+   "foaf:name": "Manu"
+ }
+]

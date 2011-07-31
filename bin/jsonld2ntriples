@@ -1,0 +1,22 @@
+#! /usr/bin/env escript
+%%! -pa ./ebin/ -pa ./deps/jsx/ebin
+
+% This file is part of erlang-json-ld released under the MIT license.
+% See the LICENSE file for more information.
+
+main(Args) ->
+    case Args of
+        [JsonFile] -> parse_json_to_ntriples(JsonFile);
+        _ -> io:format("Wrong usage: jsonfile~n", [])
+    end.
+
+parse_json_to_ntriples(JsonFile) ->
+    {ok, Json} = file:read_file(JsonFile),
+    NTriples = urdf:j2t(Json),
+    lists:foreach(
+        fun(NTriple) ->
+            io:format("~s~n", [binary_to_list(NTriple)])
+        end,
+        NTriples
+    ),
+    ok.
