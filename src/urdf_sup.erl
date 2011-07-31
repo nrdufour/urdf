@@ -1,5 +1,13 @@
 
+% This file is part of erlang-json-ld released under the MIT license.
+% See the LICENSE file for more information.
+
+%
+% JSON-LD Processor based on Bradley Allen work
+%
+
 -module(urdf_sup).
+-author("Nicolas R Dufour <nicolas.dufour@nemoworld.info>").
 
 -behaviour(supervisor).
 
@@ -25,4 +33,3 @@ start_link() ->
 
 init([]) ->
     {ok, { {one_for_one, 5, 10}, []} }.
-
