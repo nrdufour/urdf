@@ -212,7 +212,6 @@ process_resource(Object, Context) ->
                         undefined -> <<"">>;
                         _         -> PossibleBase
                     end,
-                    % TODO need something for url parsing with #base rather than just concatenate it!
                     <<Base/binary, IRI/binary>>;
                 % RelativeIri
                 %{_, _, _, {match, [IRI]}} ->
