@@ -36,7 +36,7 @@ convert(Triples) ->
             _  -> <<", ">>
         end,
 
-        list_to_binary([Acc, Comma, Subject, DisplayedValues])
+        list_to_binary([Acc, Comma, Subject, DisplayedValues, <<"\n}">>])
     end,
 
-    list_to_binary([<<"[">>, dict:fold(ConvertEntity, [], Entities), <<"\n}]\n\n">>]).
+    list_to_binary([<<"[">>, dict:fold(ConvertEntity, [], Entities), <<"]\n\n">>]).
