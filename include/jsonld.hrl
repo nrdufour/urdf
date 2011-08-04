@@ -15,8 +15,9 @@
 -define(SUBJECT_KEY, <<"@subject">>).
 -define(TYPE_KEY, <<"@type">>).
 
--define(DEFAULT_CONTEXT,
+-define(DEFAULT_NAMES,
 [
+        % common namespaces
         {<<"rdf">>, <<"http://www.w3.org/1999/02/22-rdf-syntax-ns#">>},
         {<<"xsd">>, <<"http://www.w3.org/2001/XMLSchema#">>},
         {<<"dc">>, <<"http://purl.org/dc/terms/">>},
@@ -28,9 +29,27 @@
         {<<"vcard">>, <<"http://www.w3.org/2006/vcard/ns#">>},
         {<<"cal">>, <<"http://www.w3.org/2002/12/cal/ical#">>},
         {<<"doap">>, <<"http://usefulinc.com/ns/doap#">>},
+
+        % a few common elements (from foaf)
         {<<"Person">>, <<"http://xmlns.com/foaf/0.1/Person">>},
         {<<"name">>, <<"http://xmlns.com/foaf/0.1/name">>},
         {<<"homepage">>, <<"http://xmlns.com/foaf/0.1/homepage">>}
+]
+).
+
+-define(DEFAULT_KEYWORDS,
+[
+        %?LOCAL_CONTEXT_KEY, % The is obviously not overridable ;-)
+        ?BASE_KEY,
+        ?REMOTE_CONTEXT_KEY,
+        ?VOCAB_KEY,
+        %?COERCE_KEY, % XXX This can't be seriously overriden!
+        ?LITERAL_KEY,
+        ?IRI_KEY,
+        ?LANGUAGE_KEY,
+        ?DATATYPE_KEY,
+        ?SUBJECT_KEY,
+        ?TYPE_KEY
 ]
 ).
 

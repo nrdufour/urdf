@@ -162,7 +162,7 @@ process_other(JsonObject, StateWithSubject) ->
 % ---
 
 is_resource(_Subject, _Property, Object, Context) ->
-    jsonld_context:has_namespace(Context, Object)
+    jsonld_context:has_prefix(Context, Object)
     or not(nomatch == re:run(Object, ?BNODE_PATTERN))
     or not(nomatch == re:run(Object, ?CURIE_PATTERN))
     or not(nomatch == re:run(Object, ?ABSOLUTE_IRI_PATTERN)).
@@ -185,22 +185,22 @@ process_resource(Object, Context) ->
     RelativeIri = re:run(Object, ?RELATIVE_IRI_PATTERN, [{capture, ['iri'], binary}]),
     Curie = re:run(Object, ?CURIE_PATTERN, [{capture, ['prefix', 'reference'], binary}]),
     BNode = re:run(Object, ?BNODE_PATTERN),
-    case jsonld_context:has_namespace(Context, Object) of
-        true -> jsonld_context:get_namespace(Context, Object);
+    case jsonld_context:has_prefix(Context, Object) of
+        true -> jsonld_context:get_prefix(Context, Object);
         false ->
             case {BNode, Curie, AbsoluteIri, RelativeIri} of
                 % BNode
                 {{match, _}, _, _, _} -> Object;
                 % Curie
                 {_, {match, [Prefix, Reference]}, _, _} ->
-                    case jsonld_context:has_namespace(Context, Prefix) of
+                    case jsonld_context:has_prefix(Context, Prefix) of
                         true ->
-                            PrefixNamespace = jsonld_context:get_namespace(Context, Prefix),
+                            PrefixNamespace = jsonld_context:get_prefix(Context, Prefix),
                             <<PrefixNamespace/binary, Reference/binary>>;
                         false ->
-                          case jsonld_context:has_namespace(Context, Reference) of
+                          case jsonld_context:has_prefix(Context, Reference) of
                               true ->
-                                  jsonld_context:get_namespace(Context, Reference);
+                                  jsonld_context:get_prefix(Context, Reference);
                               false ->
                                   throw({wrong_curie_resource, Object})
                           end
@@ -235,15 +235,15 @@ process_property(Key, Context) ->
         {match, [_IRI, _Prefix, <<"/">>, _Name]} -> Key;
         {match, [_IRI, <<"_">>, _IRI_Starter, _Name]} -> Key;
         {match, [IRI, Prefix, _IRI_Starter, Name]} ->
-            case jsonld_context:has_namespace(Context, Prefix) of
+            case jsonld_context:has_prefix(Context, Prefix) of
                 true ->
-                    URI = jsonld_context:get_namespace(Context, Prefix),
+                    URI = jsonld_context:get_prefix(Context, Prefix),
                     <<URI/binary, Name/binary>>;
                 false -> IRI
             end;
         _ ->
-            case jsonld_context:has_namespace(Context, Key) of
-                true -> jsonld_context:get_namespace(Context, Key);
+            case jsonld_context:has_prefix(Context, Key) of
+                true -> jsonld_context:get_prefix(Context, Key);
                 false ->
                     Vocab = jsonld_context:get_vocab(Context),
                     case Vocab of
