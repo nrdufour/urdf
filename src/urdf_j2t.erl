@@ -35,12 +35,11 @@ convert(Doc) ->
 % ----------------------------------------------------------------------------
 
 % Patterns
--define(IRI_PATTERN, "^<?(?<iri>(?<prefix>\\w+)\\:(?<iri_starter>/?)(/?)(?<name>[^>\\s]+))>?$").
+
 -define(BNODE_PATTERN, "^_\\:\\w+$").
 -define(CURIE_PATTERN, "^(?<prefix>\\w+)\\:(?<reference>\\w+)$").
 -define(ABSOLUTE_PATTERN, "^(?<iri>(\\w+)\\:(/?)(/?)([^>\\s]+))$").
 -define(ABSOLUTE_IRI_PATTERN, "^(?<iri>(\\w+)\:(/?)(/?)([^>\\s]+))$").
--define(RELATIVE_IRI_PATTERN, "^(?<iri>[^\\:>\\s]+)$").
 -define(LANG_PATTERN, "^(?<literal>.+)@(?<lang>[a-zA-Z][a-zA-Z0-9\\-]+)$").
 -define(TYPED_LITERAL_PATTERN, "^(?<literal>.+)\\^\\^(?<datatype>.+)$").
 -define(DATETIME_PATTERN, "^(?<year>\\d\\d\\d\\d)([-])?(?<month>\\d\\d)([-])?(?<day>\\d\\d)((T|\\s+)(?<hour>\\d\\d)(([:])?(?<minute>\\d\\d)(([:])?(?<second>\\d\\d)(([.])?(?<fraction>\\d+))?)?)?)?((?<tzzulu>Z)|(?<tzoffset>[-+])(?<tzhour>\\d\\d)([:])?(?<tzminute>\\d\\d))?$").
@@ -166,7 +165,6 @@ is_resource(_Subject, _Property, Object, Context) ->
     or not(nomatch == re:run(Object, ?BNODE_PATTERN))
     or not(nomatch == re:run(Object, ?CURIE_PATTERN))
     or not(nomatch == re:run(Object, ?ABSOLUTE_IRI_PATTERN)).
-%    or not(nomatch == re:run(Object, ?RELATIVE_IRI_PATTERN)).
 
 triple(Subject, Property, Object, Context) ->
     case is_resource(Subject, Property, Object, Context) of
@@ -182,17 +180,16 @@ process_literal_valued_triple(Subject, Property, Object, _Context) ->
 
 process_resource(Object, Context) ->
     AbsoluteIri = re:run(Object, ?ABSOLUTE_IRI_PATTERN, [{capture, ['iri'], binary}]),
-    RelativeIri = re:run(Object, ?RELATIVE_IRI_PATTERN, [{capture, ['iri'], binary}]),
     Curie = re:run(Object, ?CURIE_PATTERN, [{capture, ['prefix', 'reference'], binary}]),
     BNode = re:run(Object, ?BNODE_PATTERN),
     case jsonld_context:has_prefix(Context, Object) of
         true -> jsonld_context:get_prefix(Context, Object);
         false ->
-            case {BNode, Curie, AbsoluteIri, RelativeIri} of
+            case {BNode, Curie, AbsoluteIri} of
                 % BNode
-                {{match, _}, _, _, _} -> Object;
+                {{match, _}, _, _} -> Object;
                 % Curie
-                {_, {match, [Prefix, Reference]}, _, _} ->
+                {_, {match, [Prefix, Reference]}, _} ->
                     case jsonld_context:has_prefix(Context, Prefix) of
                         true ->
                             PrefixNamespace = jsonld_context:get_prefix(Context, Prefix),
@@ -206,49 +203,78 @@ process_resource(Object, Context) ->
                           end
                     end;
                 % AbsoluteIri
-                {_, _, {match, [IRI]}, _} ->
+                {_, _, {match, [IRI]}} ->
                     PossibleBase = jsonld_context:get_base(Context),
                     Base = case PossibleBase of
                         undefined -> <<"">>;
                         _         -> PossibleBase
                     end,
                     <<Base/binary, IRI/binary>>;
-                % RelativeIri
-                %{_, _, _, {match, [IRI]}} ->
-                %    PossibleBase = jsonld_context:get_base(Context),
-                %    case PossibleBase of
-                %        undefined ->
-                %            throw({wrong_relative_iri_resource, Object});
-                %        _ ->
-                %            % TODO need something for url parsing with #base rather than just concatenate it!
-                %            <<PossibleBase/binary, IRI/binary>>
-                %    end;
-                % Everything else
                 _ ->
                     Object
                     %throw({wrong_resource, Object})
             end
     end.
 
+% Patterns to recognize the triple property
+-define(ABSOLUTE_IRI, "^(?<iri>(\\w+)\\://([^>\\s]+))$").
+-define(ABSOLUTE_CURIE, "^(?<iri>(?<prefix>\\w+)\\:(?<name>\\w+))$").
+-define(RELATIVE_CURIE, "^(?<iri>(\\:)?(?<name>\\w+))$").
+
+% Process a triple property.
+% In JSON-LD, it's the key.
+%
+% It can be:
+% - an absolute IRI such as 'http://xmlns.com/foaf/0.1/name'
+% - a CURIE such as 'foaf:name'
+% - a relative CURIE such as ':name' or 'name'
+%
+% returns the expanded property IRI
 process_property(Key, Context) ->
-    case re:run(Key, ?IRI_PATTERN, [{capture, ['iri', 'prefix', 'iri_starter', 'name'], binary}]) of
-        {match, [_IRI, _Prefix, <<"/">>, _Name]} -> Key;
-        {match, [_IRI, <<"_">>, _IRI_Starter, _Name]} -> Key;
-        {match, [IRI, Prefix, _IRI_Starter, Name]} ->
+    % regexp to identify which type of property we have
+    AbsoluteIri = re:run(Key, ?ABSOLUTE_IRI, [{capture, ['iri'], binary}]),
+    AbsoluteCurie = re:run(Key, ?ABSOLUTE_CURIE, [{capture, ['iri', 'prefix', 'name'], binary}]),
+    RelativeCurie = re:run(Key, ?RELATIVE_CURIE, [{capture, ['iri', 'name'], binary}]),
+
+    % time to see which one we have here
+    case {AbsoluteIri, AbsoluteCurie, RelativeCurie} of
+        % we have an absolute IRI
+        {{match, [_IRI]}, _,  _} -> Key;
+        % we have an absolute CURIE
+        {_, {match, [_IRI, Prefix, Name]}, _} ->
             case jsonld_context:has_prefix(Context, Prefix) of
                 true ->
                     URI = jsonld_context:get_prefix(Context, Prefix),
-                    <<URI/binary, Name/binary>>;
-                false -> IRI
+                    iolist_to_binary([URI, Name]);
+                % this case is a bit odd.
+                % it's like having 'foo:bar' without knowing what is 'foo'
+                false -> throw([unknown_prefix, Key, Prefix])
             end;
+        % we have a relative CURIE
+        {_, _, {match, [_IRI, Name]}} ->
+            % let's grab the @vocab value
+            % or the default context URI
+            % TODO need to add that default context
+            Vocab = jsonld_context:get_vocab(Context),
+            case Vocab of
+                % no vocab is defined!
+                % let's see if there is a default context
+                undefined ->
+                    case jsonld_context:has_prefix(Context, Name) of
+                        false ->
+                            % TODO define a default context in jsonld_context.erl
+                            % In case somebody would do:
+                            % @context: "http://...."
+
+                            % throwing an error for now
+                            throw([bad_property, Key]);
+                        true ->
+                            jsonld_context:get_prefix(Context, Name)
+                    end;
+                % we have a vocab: prepend the name with it
+                _ -> iolist_to_binary([Vocab, Name])
+            end;
+        % anything else: error
         _ ->
-            case jsonld_context:has_prefix(Context, Key) of
-                true -> jsonld_context:get_prefix(Context, Key);
-                false ->
-                    Vocab = jsonld_context:get_vocab(Context),
-                    case Vocab of
-                        undefined -> throw({bad_property, Key});
-                        _ -> <<Vocab/binary, Key/binary>>
-                    end
-            end
+            throw([bad_property, Key])
     end.
