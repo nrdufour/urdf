@@ -48,7 +48,7 @@ prepare_list(Doc) ->
 normalize_object(Object, Ctx) ->
 
     % First create a JSON-LD Context
-    JsonldCtx = jsonld_context:create(),
+    JsonldCtx = jsonld_context:create_default(),
 
     % then extract any context in the current object
     ObjectCtx = jsonld_context:process_local_context(Object, JsonldCtx),
@@ -60,9 +60,14 @@ normalize_object(Object, Ctx) ->
     Properties = process_properties(Object, ObjectCtx),
 
     % Create the normalized object
-    create_normalized_object(Subject, Properties, ObjectCtx).
+    NormalizedObject = create_normalized_object(Subject, Properties, ObjectCtx),
 
-process_subject(JsonObject, StateWithLocalContext) ->
+    % Append the object to the list
+    UpdatedList = lists:merge(Ctx#ctx.objects, [NormalizedObject]),
+
+    Ctx#ctx{ objects = UpdatedList }.
+
+process_subject(JsonObject, ObjectCtx) ->
     % Subject
     LocalSubjectProp = ?HAS_VALUE(JsonObject, ?SUBJECT_KEY),
     case LocalSubjectProp of
