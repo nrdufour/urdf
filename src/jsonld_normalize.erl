@@ -14,18 +14,25 @@
 
 -include("jsonld.hrl").
 
+-record(ctx, {
+    objects = [],
+    stuff
+}).
+
 do_it(Doc) when is_list(Doc) ->
     Objects = prepare_list(Doc),
 
     NormalizeObject = fun(Object, Ctx) ->
-        ok
+        normalize_object(Object, Ctx)
     end,
 
-    lists:foldl(
+    FinalCtx = lists:foldl(
         NormalizeObject,
-        [],
+        #ctx{},
         Objects
-    ).
+    ),
+
+    FinalCtx#ctx.objects.
 
 % --- Internal API ---
 
@@ -36,3 +43,7 @@ prepare_list(Doc) ->
         false ->
             Doc
     end.
+
+
+normalize_object(Object, Ctx) ->
+    ok.
