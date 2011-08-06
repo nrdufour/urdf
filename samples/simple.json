@@ -1,5 +1,5 @@
 { 
-  "@context": { "@vocab": "http://purl.org/jsonld/Person" },
+  "@context": { "@vocab": "http://purl.org/jsonld/Person/" },
   "@subject": "http://dbpedia.org/resource/John_Lennon",
   "name": "John Lennon",
   "birthday": "10-09",
