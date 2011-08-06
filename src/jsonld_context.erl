@@ -7,7 +7,7 @@
 
 -include("jsonld.hrl").
 
--export([create_default/0, merge/2, has_prefix/2, get_prefix/2, get_base/1, get_vocab/1]).
+-export([create_default/0, process_local_context/2, has_prefix/2, get_prefix/2, get_base/1, get_vocab/1]).
 
 -record(context, {
         % 'names' is a simple dict that maps a set of names to a set of IRI
@@ -37,21 +37,14 @@ create_default() ->
     DefaultKeywords = create_default_keywords(),
     #context{ names = DefaultNames, coerce = DefaultCoerce, keywords = DefaultKeywords }.
 
-% NewNames has to be a proplist here
-merge(Context, NewNames) when is_list(NewNames) ->
-    Fun = fun({Key, Value}, Ctx) ->
-        case Key of
-            ?VOCAB_KEY  -> Ctx#context{ vocab = Value };
-            ?BASE_KEY   -> Ctx#context{ base  = Value };
-            ?COERCE_KEY ->
-                % TODO
-                Ctx;
-            _ ->
-                UpdatedNames = dict:store(Key, Value, Ctx#context.names),
-                Ctx#context{ names = UpdatedNames }
-        end
-    end,
-    lists:foldl(Fun, Context, NewNames).
+process_local_context(JsonObject, Context) ->
+    % Local Context: merge if exists
+    LocalContextProp = ?HAS_VALUE(JsonObject, ?LOCAL_CONTEXT_KEY),
+    case LocalContextProp of
+        false -> Context;
+        {_, Value} ->
+            merge(Context, Value)
+    end.
 
 has_prefix(Context, Prefix) ->
     dict:is_key(Prefix, Context#context.names).
@@ -68,6 +61,22 @@ get_vocab(Context) ->
 %
 % Internal API
 %
+
+% NewNames has to be a proplist here
+merge(Context, NewNames) when is_list(NewNames) ->
+    Fun = fun({Key, Value}, Ctx) ->
+        case Key of
+            ?VOCAB_KEY  -> Ctx#context{ vocab = Value };
+            ?BASE_KEY   -> Ctx#context{ base  = Value };
+            ?COERCE_KEY ->
+                % TODO
+                Ctx;
+            _ ->
+                UpdatedNames = dict:store(Key, Value, Ctx#context.names),
+                Ctx#context{ names = UpdatedNames }
+        end
+    end,
+    lists:foldl(Fun, Context, NewNames).
 
 create_default_names() ->
     InitialDict = dict:new(),

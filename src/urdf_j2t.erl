@@ -50,7 +50,8 @@ triples(Item, InitialState) ->
         % it's an object
         true ->
             % Local Context: merge if exists
-            StateWithLocalContext = process_local_context(Item, InitialState),
+            UpdatedJsonldContext = jsonld_context:process_local_context(Item, InitialState#state.context),
+            StateWithLocalContext = InitialState#state{ context = UpdatedJsonldContext },
             % Subject
             StateWithSubject = process_subject(Item, StateWithLocalContext),
             % Everything else
@@ -69,16 +70,6 @@ triples(Item, InitialState) ->
                 Item
             ),
             InitialState#state{triples = AllTriples}
-    end.
-
-process_local_context(JsonObject, InitialState) ->
-    % Local Context: merge if exists
-    LocalContextProp = ?HAS_VALUE(JsonObject, ?LOCAL_CONTEXT_KEY),
-    case LocalContextProp of
-        false -> InitialState;
-        {_, Value} ->
-            NewContext = jsonld_context:merge(InitialState#state.context, Value),
-            InitialState#state{context = NewContext}
     end.
 
 % -- Subject --
@@ -160,6 +151,43 @@ process_other(JsonObject, StateWithSubject) ->
 
 % ---
 
+% Patterns to recognize an IRI (absolute or not, curie, bnode)
+-define(ABSOLUTE_IRI, "^(?<iri>(\\w+)\\://([^>\\s]+))$").
+-define(ABSOLUTE_CURIE, "^(?<iri>(?<prefix>\\w+)\\:(?<name>\\w+))$").
+-define(RELATIVE_CURIE, "^(?<iri>(\\:)?(?<name>\\w+))$").
+-define(BNODE, "^_\\:(?<id>\\w+)$").
+
+% Process a triple object.
+% In JSON-LD, it's the value for a given key.
+%
+% It can be:
+% - an absolute IRI such as 'http://xmlns.com/foaf/0.1/name'
+% - a CURIE such as 'foaf:name'
+% - a relative CURIE such as ':name' or 'name'
+% - a bnode such as '_:c10n1'
+% - a literal such as 'hello world!'
+% - a JSON object carrying:
+%   - an @iri property
+%   - a @literal property (with optionally @language)
+%
+% returns the expanded property IRI or the value
+%
+process_object(Object, Context) ->
+    case ?IS_OBJECT(Object) of
+        % object is a json object
+        true  ->
+            process_object_as_object(Object, Context);
+        % object is an IRI or a literal
+        false ->
+            process_object_as_iri_or_literal(Object, Context)
+    end.
+
+process_object_as_object(Object, Context) ->
+    to_be_implemented.
+
+process_object_as_iri_or_literal(Object, Context) ->
+    to_be_implemented.
+
 is_resource(_Subject, _Property, Object, Context) ->
     jsonld_context:has_prefix(Context, Object)
     or not(nomatch == re:run(Object, ?BNODE_PATTERN))
@@ -215,11 +243,6 @@ process_resource(Object, Context) ->
                     %throw({wrong_resource, Object})
             end
     end.
-
-% Patterns to recognize the triple property
--define(ABSOLUTE_IRI, "^(?<iri>(\\w+)\\://([^>\\s]+))$").
--define(ABSOLUTE_CURIE, "^(?<iri>(?<prefix>\\w+)\\:(?<name>\\w+))$").
--define(RELATIVE_CURIE, "^(?<iri>(\\:)?(?<name>\\w+))$").
 
 % Process a triple property.
 % In JSON-LD, it's the key.
