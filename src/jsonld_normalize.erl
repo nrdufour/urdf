@@ -46,4 +46,44 @@ prepare_list(Doc) ->
 
 
 normalize_object(Object, Ctx) ->
-    ok.
+
+    % First create a JSON-LD Context
+    JsonldCtx = jsonld_context:create(),
+
+    % then extract any context in the current object
+    ObjectCtx = jsonld_context:process_local_context(Object, JsonldCtx),
+
+    % extract the subject if it exists, otherwise use a bnode
+    Subject = process_subject(Object, ObjectCtx),
+
+    % Finally get all the other properties
+    Properties = process_properties(Object, ObjectCtx),
+
+    % Create the normalized object
+    create_normalized_object(Subject, Properties, ObjectCtx).
+
+process_subject(JsonObject, StateWithLocalContext) ->
+    % Subject
+    LocalSubjectProp = ?HAS_VALUE(JsonObject, ?SUBJECT_KEY),
+    case LocalSubjectProp of
+        {_, SubjectValue} ->
+            SubjectValue;
+        false ->
+            urdf_util:new_bnode()
+    end.
+
+process_properties(Object, ObjectCtx) ->
+    [].
+
+create_normalized_object(Subject, Properties, _ObjectCtx) ->
+    ObjectWithSubject = [ { <<"@subject">>, [ { <<"@iri">>, Subject } ] } ],
+
+    ProcessProperty = fun({ Name, Value }, Norm) ->
+        Norm
+    end,
+
+    lists:foldl(
+        ProcessProperty,
+        ObjectWithSubject,
+        Properties
+    ).
