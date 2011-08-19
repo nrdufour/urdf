@@ -11,10 +11,12 @@ main(Args) ->
     end.
 
 parse_json_to_ntriples(JsonFile) ->
-    {ok, Json} = file:read_file(JsonFile),
-    Triples = urdf:j2t(Json),
-    Normalized = urdf:t2j(Triples),
+    {ok, Doc} = file:read_file(JsonFile),
 
-    io:format("~s", [Normalized]),
+    JsonItem = jsx:json_to_term(Doc),
+
+    NormalizedJson = jsonld_normalize:do_it(JsonItem),
+
+    io:format("~p", [NormalizedJson]),
     ok.
 
