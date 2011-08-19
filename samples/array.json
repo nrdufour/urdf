@@ -1,18 +1,18 @@
 [
  {
-   "@": "_:bnode1",
+   "@subject": "_:bnode1",
    "a": "foaf:Person",
    "foaf:homepage": "http://example.com/bob/",
    "foaf:name": "Bob"
  },
  {
-   "@": "_:bnode2",
+   "@subject": "_:bnode2",
    "a": "foaf:Person",
    "foaf:homepage": "http://example.com/eve/",
    "foaf:name": "Eve"
  },
  {
-   "@": "_:bnode3",
+   "@subject": "_:bnode3",
    "a": "foaf:Person",
    "foaf:homepage": "http://example.com/manu/",
    "foaf:name": "Manu"
