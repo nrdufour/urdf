@@ -79,10 +79,27 @@ process_subject(JsonObject, ObjectCtx) ->
             urdf_util:new_bnode()
     end.
 
-extract_normalized_objects(Subject, Object, _ObjectCtx, State) ->
+extract_normalized_objects(Subject, Object, ObjectCtx, State) ->
     ObjectWithSubject = [ { <<"@subject">>, [ { <<"@iri">>, Subject } ] } ],
 
-    NormalizedObject = ObjectWithSubject,
+    NormalizedObject = lists:foldl(
+        fun({Key, Value}, ObjectBeingBuilt) ->
+            case Key of
+                <<"@subject">> ->
+                    ObjectBeingBuilt;
+                <<"@context">> ->
+                    ObjectBeingBuilt;
+                _ ->
+                    Property = {
+                        extract_property_key(Key, ObjectCtx),
+                        extract_property_value(Value, ObjectCtx)
+                    },
+                    ObjectBeingBuilt ++ [Property]
+            end
+        end,
+        ObjectWithSubject,
+        Object
+    ),
 
     % Append the object to the list
     NodeId = Subject,
@@ -90,3 +107,9 @@ extract_normalized_objects(Subject, Object, _ObjectCtx, State) ->
 
     State#state{ nodes = UpdatedList }.
     
+extract_property_key(Key, ObjectCtx) ->
+    Key.
+
+extract_property_value(Value, ObjectCtx) ->
+    Value.
+
