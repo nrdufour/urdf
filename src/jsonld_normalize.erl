@@ -14,27 +14,38 @@
 
 -include("jsonld.hrl").
 
--record(ctx, {
-    objects = [],
-    stuff
+-record(state, {
+    nodes,
+    node_counter = 0
 }).
 
 do_it(Doc) when is_list(Doc) ->
-    Objects = prepare_list(Doc),
+    RootObjects = prepare_list(Doc),
 
-    NormalizeObject = fun(Object, Ctx) ->
-        normalize_object(Object, Ctx)
+    NormalizeThis = fun(Object, State) ->
+        normalize_object(Object, State)
     end,
 
-    FinalCtx = lists:foldl(
-        NormalizeObject,
-        #ctx{},
-        Objects
+    InitialState = create_initial_state(),
+
+    FinalState = lists:foldl(
+        NormalizeThis,
+        InitialState,
+        RootObjects
     ),
 
-    FinalCtx#ctx.objects.
+    dict:fold(
+        fun(_Key, Value, Acc) ->
+            Acc ++ [Value]
+        end,
+        [],
+        FinalState#state.nodes
+    ).
 
 % --- Internal API ---
+
+create_initial_state() ->
+    #state{ nodes = dict:new(), node_counter = 0 }.
 
 prepare_list(Doc) ->
     case ?IS_OBJECT(Doc) of
@@ -44,8 +55,7 @@ prepare_list(Doc) ->
             Doc
     end.
 
-
-normalize_object(Object, Ctx) ->
+normalize_object(Object, State) ->
 
     % First create a JSON-LD Context
     JsonldCtx = jsonld_context:create_default(),
@@ -56,6 +66,8 @@ normalize_object(Object, Ctx) ->
     % extract the subject if it exists, otherwise use a bnode
     Subject = process_subject(Object, ObjectCtx),
 
+    % ---
+
     % Finally get all the other properties
     Properties = process_properties(Object, ObjectCtx),
 
@@ -63,9 +75,10 @@ normalize_object(Object, Ctx) ->
     NormalizedObject = create_normalized_object(Subject, Properties, ObjectCtx),
 
     % Append the object to the list
-    UpdatedList = lists:merge(Ctx#ctx.objects, [NormalizedObject]),
+    NodeId = Subject,
+    UpdatedList = dict:store(NodeId, NormalizedObject, State#state.nodes),
 
-    Ctx#ctx{ objects = UpdatedList }.
+    State#state{ nodes = UpdatedList }.
 
 process_subject(JsonObject, ObjectCtx) ->
     % Subject
@@ -92,3 +105,4 @@ create_normalized_object(Subject, Properties, _ObjectCtx) ->
         ObjectWithSubject,
         Properties
     ).
+    
