@@ -66,19 +66,8 @@ normalize_object(Object, State) ->
     % extract the subject if it exists, otherwise use a bnode
     Subject = process_subject(Object, ObjectCtx),
 
-    % ---
-
-    % Finally get all the other properties
-    Properties = process_properties(Object, ObjectCtx),
-
     % Create the normalized object
-    NormalizedObject = create_normalized_object(Subject, Properties, ObjectCtx),
-
-    % Append the object to the list
-    NodeId = Subject,
-    UpdatedList = dict:store(NodeId, NormalizedObject, State#state.nodes),
-
-    State#state{ nodes = UpdatedList }.
+    extract_normalized_objects(Subject, Object, ObjectCtx, State).
 
 process_subject(JsonObject, ObjectCtx) ->
     % Subject
@@ -90,19 +79,14 @@ process_subject(JsonObject, ObjectCtx) ->
             urdf_util:new_bnode()
     end.
 
-process_properties(Object, ObjectCtx) ->
-    [].
-
-create_normalized_object(Subject, Properties, _ObjectCtx) ->
+extract_normalized_objects(Subject, Object, _ObjectCtx, State) ->
     ObjectWithSubject = [ { <<"@subject">>, [ { <<"@iri">>, Subject } ] } ],
 
-    ProcessProperty = fun({ Name, Value }, Norm) ->
-        Norm
-    end,
+    NormalizedObject = ObjectWithSubject,
 
-    lists:foldl(
-        ProcessProperty,
-        ObjectWithSubject,
-        Properties
-    ).
+    % Append the object to the list
+    NodeId = Subject,
+    UpdatedList = dict:store(NodeId, NormalizedObject, State#state.nodes),
+
+    State#state{ nodes = UpdatedList }.
     
