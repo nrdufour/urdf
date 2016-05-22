@@ -8,7 +8,7 @@
 -export([uuid/0, new_bnode/0, is_proplist/1]).
 
 uuid() ->
-    Now = {_, _, Micro} = now(),
+    Now = {_, _, Micro} = erlang:timestamp(),
     Nowish = calendar:now_to_universal_time(Now),
     Nowsecs = calendar:datetime_to_gregorian_seconds(Nowish),
     Then = calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}),

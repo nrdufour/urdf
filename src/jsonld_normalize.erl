@@ -69,7 +69,7 @@ normalize_object(Object, State) ->
     % Create the normalized object
     extract_normalized_objects(Subject, Object, ObjectCtx, State).
 
-process_subject(JsonObject, ObjectCtx) ->
+process_subject(JsonObject, _ObjectCtx) ->
     % Subject
     LocalSubjectProp = ?HAS_VALUE(JsonObject, ?SUBJECT_KEY),
     case LocalSubjectProp of
@@ -107,9 +107,9 @@ extract_normalized_objects(Subject, Object, ObjectCtx, State) ->
 
     State#state{ nodes = UpdatedList }.
     
-extract_property_key(Key, ObjectCtx) ->
+extract_property_key(Key, _ObjectCtx) ->
     Key.
 
-extract_property_value(Value, ObjectCtx) ->
+extract_property_value(Value, _ObjectCtx) ->
     Value.
 

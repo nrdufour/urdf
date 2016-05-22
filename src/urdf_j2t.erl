@@ -5,7 +5,8 @@
 -module(urdf_j2t).
 -author("Nicolas R Dufour <nicolas.dufour@nemoworld.info>").
 
--export([convert/1]).
+%% TODO added to compile for now
+-compile(export_all).
 
 -include("triples.hrl").
 -include("jsonld.hrl").
@@ -182,10 +183,10 @@ process_object(Object, Context) ->
             process_object_as_iri_or_literal(Object, Context)
     end.
 
-process_object_as_object(Object, Context) ->
+process_object_as_object(_Object, _Context) ->
     to_be_implemented.
 
-process_object_as_iri_or_literal(Object, Context) ->
+process_object_as_iri_or_literal(_Object, _Context) ->
     to_be_implemented.
 
 is_resource(_Subject, _Property, Object, Context) ->

@@ -9,5 +9,5 @@
 
 -include("triples.hrl").
 
-convert(Triples) ->
+convert(_Triples) ->
     ok.

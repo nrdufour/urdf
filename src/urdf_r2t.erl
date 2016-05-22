@@ -9,5 +9,5 @@
 
 -include("triples.hrl").
 
-convert(RDF) ->
+convert(_RDF) ->
     ok.

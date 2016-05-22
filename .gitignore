@@ -2,3 +2,5 @@ deps
 ebin
 *.beam
 erl_crash.dump
+.erlang.mk
+urdf.d
