@@ -19,7 +19,7 @@
 
 convert(Doc) ->
     % decode the binary json into eep0018
-    JsonItem = jsx:json_to_term(Doc),
+    JsonItem = jsx:decode(Doc),
 
     % create the jsonld processor initial state
     DefaultContext = jsonld_context:create_default(),

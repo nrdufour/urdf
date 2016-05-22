@@ -13,7 +13,7 @@ main(Args) ->
 parse_json_to_ntriples(JsonFile) ->
     {ok, Doc} = file:read_file(JsonFile),
 
-    JsonItem = jsx:json_to_term(Doc),
+    JsonItem = jsx:decode(Doc),
 
     NormalizedJson = jsonld_normalize:do_it(JsonItem),
 
